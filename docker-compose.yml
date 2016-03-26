@@ -1,0 +1,57 @@
+redis:
+  image: redis
+  container_name: redis
+  ports:
+    - "6379"
+  restart: always
+mysql:
+  image: mysql
+  container_name: mysql
+  ports:
+    - "3306"
+  environment:
+    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    MYSQL_USER: ${MYSQL_USER}
+    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    MYSQL_DATABASE: ${MYSQL_DATABASE}
+  volumes:
+    - "/gfb/app/dumps:/dumps"
+  restart: always
+ranger:
+  image: globalfoodbook/ranger
+  container_name: ranger
+  links:
+    - mysql
+    - redis
+  environment:
+     AWS_S3: ${AWS_S3}
+  volumes:
+    - "/gfb/app/dumps:/dumps"
+  cap_add:
+    - MKNOD
+    - SYS_ADMIN
+  devices:
+    - "/dev/fuse"
+  privileged: true
+  restart: always
+gfb:
+  image: globalfoodbook/gfb
+  container_name: gfb
+  ports:
+    - "5118:5118"
+  links:
+    - mysql
+    - redis
+  volumes:
+    - "/gfb/:/home/gfb/app"
+  restart: always
+varnish:
+  image: globalfoodbook/varnish
+  container_name: varnish
+  ports:
+    - "80:80"
+  links:
+    - gfb:backend
+  environment:
+    VARNISH_HOST: globalfoodbook.com
+  restart: always
