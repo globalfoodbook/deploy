@@ -1,12 +1,10 @@
 redis:
   image: redis
-  container_name: redis
   ports:
     - "6379"
   restart: always
 mysql:
   image: mysql
-  container_name: mysql
   ports:
     - "3306"
   environment:
@@ -15,18 +13,17 @@ mysql:
     MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     MYSQL_DATABASE: ${MYSQL_DATABASE}
   volumes:
-    - "/gfb/app/dumps:/dumps"
+    - "${HOME}/conductor/vagrant/scripts/dumps:/dumps"
   restart: always
 ranger:
   image: globalfoodbook/ranger
-  container_name: ranger
   links:
     - mysql
     - redis
   environment:
      AWS_S3: ${AWS_S3}
   volumes:
-    - "/gfb/app/dumps:/dumps"
+    - "${HOME}/conductor/vagrant/scripts/dumps:/dumps"
   cap_add:
     - MKNOD
     - SYS_ADMIN
@@ -43,7 +40,7 @@ gfb:
     - mysql
     - redis
   volumes:
-    - "/gfb/:/home/gfb/app"
+    - "${HOME}/app:/home/gfb/app"
   restart: always
 varnish:
   image: globalfoodbook/varnish
