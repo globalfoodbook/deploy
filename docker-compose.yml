@@ -13,17 +13,18 @@ mysql:
     MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     MYSQL_DATABASE: ${MYSQL_DATABASE}
   volumes:
-    - "${HOME}/conductor/vagrant/scripts/dumps:/dumps"
+    - "${HOME}/app/dumps:/dumps"
   restart: always
 ranger:
   image: globalfoodbook/ranger
+  container_name: ranger
   links:
     - mysql
     - redis
   environment:
      AWS_S3: ${AWS_S3}
   volumes:
-    - "${HOME}/conductor/vagrant/scripts/dumps:/dumps"
+    - "${HOME}/app/dumps:/dumps"
   cap_add:
     - MKNOD
     - SYS_ADMIN
