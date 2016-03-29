@@ -3,11 +3,11 @@
 First steps
 -----------
 
-You will need to clone in `..` the following the gfb repos 
+You will need to clone in `..` gfb repos 
 
-Install [docker](docker.com) (probably
-[boot2docker](https://docs.docker.com/installation/mac/)) and
-[docker-compose](https://docs.docker.com/compose/install/)
+* Install [docker](docker.com) (probably
+[boot2docker](https://docs.docker.com/installation/mac/))
+* [docker-compose](https://docs.docker.com/compose/install/)
 
 Run the thing
 -------------
