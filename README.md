@@ -1,5 +1,7 @@
 # Docker Compose Configuration for GFB
 
+This is a sample docker-compose configuration yml file used to test wordpress installation on [http://globalfoodbook.com](http://globalfoodbook.com)
+
 First steps
 -----------
 
@@ -23,7 +25,6 @@ If you want to run everything as deamonised:
 If you just want part of the architecture:
 
     docker-compose up gfb # for example
-
 
 BIG WARNINGS (please READ!)
 ---------------------------
