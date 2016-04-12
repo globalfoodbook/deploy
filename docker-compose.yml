@@ -25,6 +25,8 @@ ranger:
     - redis
   environment:
      AWS_S3: ${AWS_S3}
+     AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+     AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   volumes:
     - "${HOME}/app/dumps:/dumps"
   cap_add:
