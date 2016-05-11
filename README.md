@@ -24,6 +24,12 @@ If you want to run everything as deamonised:
 
 If you just want part of the architecture:
 
+
+
+# Contributors
+
+* [Ikenna N. Okpala](http://ikennaokpala.com)
+
     docker-compose up gfb # for example
 
 BIG WARNINGS (please READ!)
