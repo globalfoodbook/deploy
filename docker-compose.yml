@@ -1,7 +1,7 @@
 nls:
   image: globalfoodbook/nls
   volumes:
-    - "${HOME}/app/nutrition_service:/go/src/nutrition_service"
+    - "/home/core/app/nutrition_service:/go/src/nutrition_service"
   restart: always
   container_name: nls
   environment:
@@ -16,29 +16,29 @@ redis:
   ports:
     - "6379"
   restart: always
-mysql:
-  image: mysql
-  container_name: mysql
+mariadb:
+  image: mariadb
+  container_name: mariadb
   ports:
     - "3306"
   environment:
-    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    MYSQL_USER: ${MYSQL_USER}
-    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    MYSQL_DATABASE: ${MYSQL_DATABASE}
+    MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    MARIADB_USER: ${MARIADB_USER}
+    MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+    MARIADB_DATABASE: ${MARIADB_DATABASE}
   volumes:
-    - "${HOME}/app/dumps:/dumps"
+    - "/home/core/app/dumps:/dumps"
   restart: always
 ranger:
   image: globalfoodbook/ranger
   container_name: ranger
   links:
-    - mysql
+    - mariadb
     - redis
   environment:
     AWS_S3: ${AWS_S3}
   volumes:
-    - "${HOME}/app/dumps:/dumps"
+    - "/home/core/app/dumps:/dumps"
   cap_add:
     - MKNOD
     - SYS_ADMIN
@@ -52,13 +52,14 @@ gfb:
   ports:
     - "5118:5118"
   links:
-    - mysql
+    - mariadb
     - redis
+    - nls
   environment:
     AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
     AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   volumes:
-    - "${HOME}/app:/home/gfb/app"
+    - "/home/core/app:/home/gfb/app"
   restart: always
 varnish:
   image: globalfoodbook/varnish
