@@ -1,8 +1,21 @@
+swag:
+  image: globalfoodbook/swag
+  volumes:
+    - "/home/core/app/api:/go/src/bitbucket.org/globalfoodbook/api"
+  container_name: swag
+  links:
+    - mariadb
+  environment:
+    BASIC_USER: ${BASIC_USER}
+    BASIC_PASS: ${BASIC_PASS}
+    GFB_API_KEYS: ${GFB_API_KEYS}
+  ports:
+    - "5121:5121"
+  restart: always
 nls:
   image: globalfoodbook/nls
   volumes:
     - "/home/core/app/nutrition_service:/go/src/nutrition_service"
-  restart: always
   container_name: nls
   environment:
     POSTGRES_DB: ${POSTGRES_DB}
@@ -37,7 +50,10 @@ ranger:
     - mariadb
     - redis
   environment:
-    AWS_S3: ${AWS_S3}
+    GCS_AUTH: ${GCS_AUTH}
+    GCS_ACCESS_KEY: ${GCS_ACCESS_KEY}
+    GCS_SECRET_ACCESS_KEY: ${GCS_SECRET_ACCESS_KEY}
+    GCS_BUCKET: assets.globalfoodbook.net
   volumes:
     - "/home/core/app/dumps:/dumps"
   cap_add:
@@ -47,28 +63,61 @@ ranger:
     - "/dev/fuse"
   privileged: true
   restart: always
+frontnode:
+  image: globalfoodbook/frontnode
+  container_name: frontnode
+  links:
+    - swag:api
+  environment:
+    GFB_API_KEYS: ${GFB_API_KEYS}
+    MAILCHIMP_API_KEY: ${MAILCHIMP_API_KEY}
+    MAILCHIMP_LIST_ID: ${MAILCHIMP_LIST_ID}
+    GFB_HTTP_BASIC_USER: ${GFB_HTTP_BASIC_USER}
+    GFB_HTTP_BASIC_PASS: ${GFB_HTTP_BASIC_PASS}
+    GFB_CDN_URL: ${GFB_CDN_URL}
+    GFB_API_BACKEND_URL: ${GFB_API_BACKEND_URL}
+    CONTAINERIZED: "true"
+  volumes:
+    - "/home/core/app:/home/gfb/app"
+  restart: always
 gfb:
   image: globalfoodbook/gfb
   container_name: gfb
-  ports:
-    - "5118:5118"
   links:
     - mariadb
     - redis
     - nls
   environment:
-    AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
-    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    GCS_ACCESS_KEY: ${GCS_ACCESS_KEY}
+    GCS_SECRET_ACCESS_KEY: ${GCS_SECRET_ACCESS_KEY}
+  ports:
+    - "5119:5119"
   volumes:
     - "/home/core/app:/home/gfb/app"
   restart: always
+  # build:
+  #   args:
+  #     BUILD_DATE: `date -u +"%Y-%m-%dT%H:%M:%SZ"`
+  #     VCS_REF: `git rev-parse --short HEAD`
 varnish:
   image: globalfoodbook/varnish
   container_name: varnish
-  ports:
-    - "80:80"
   links:
-    - gfb:backend
+    # - gfb:backend
+    - frontnode:backend
   environment:
     VARNISH_HOST: globalfoodbook.com
+  restart: always
+ngxl:
+  image: globalfoodbook/ngxl
+  container_name: ngxl
+  ports:
+    - "80:80"
+    - "443:443"
+  environment:
+    GFB_SCHEME: https
+  links:
+    - varnish
+    - swag
+    - gfb
   restart: always
