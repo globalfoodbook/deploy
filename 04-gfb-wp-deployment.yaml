@@ -1,0 +1,161 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gfb-wp
+  namespace: gfb
+  labels:
+    app: gfb-wp
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: gfb-wp
+  template:
+    metadata:
+      labels:
+        app: gfb-wp
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: wordpress
+        image: gfb-wp:v1.1.4
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-secret
+              key: DB_HOST
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-secret
+              key: DB_NAME
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-secret
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-secret
+              key: DB_PASSWORD
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-secret
+              key: DB_PORT
+        - name: WP_STATELESS_MEDIA_JSON_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-gcs-key
+              key: WP_STATELESS_MEDIA_JSON_KEY
+        # WordPress Authentication Keys (for session security)
+        - name: WP_AUTH_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-auth-keys
+              key: WP_AUTH_KEY
+        - name: WP_SECURE_AUTH_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-auth-keys
+              key: WP_SECURE_AUTH_KEY
+        - name: WP_LOGGED_IN_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-auth-keys
+              key: WP_LOGGED_IN_KEY
+        - name: WP_NONCE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-auth-keys
+              key: WP_NONCE_KEY
+        - name: WP_AUTH_SALT
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-auth-keys
+              key: WP_AUTH_SALT
+        - name: WP_SECURE_AUTH_SALT
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-auth-keys
+              key: WP_SECURE_AUTH_SALT
+        - name: WP_LOGGED_IN_SALT
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-auth-keys
+              key: WP_LOGGED_IN_SALT
+        - name: WP_NONCE_SALT
+          valueFrom:
+            secretKeyRef:
+              name: gfb-wp-auth-keys
+              key: WP_NONCE_SALT
+        envFrom:
+        - secretRef:
+            name: gfb-wp-secret
+        volumeMounts:
+        - name: wordpress-content
+          mountPath: /var/www/html/wp-content/uploads
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        # Health check using lightweight endpoint
+        livenessProbe:
+          httpGet:
+            path: /health.php
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health.php
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        # Startup probe for slow-starting containers
+        startupProbe:
+          httpGet:
+            path: /health.php
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+      volumes:
+      - name: wordpress-content
+        persistentVolumeClaim:
+          claimName: gfb-wp-content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gfb-wp
+  namespace: gfb
+spec:
+  selector:
+    app: gfb-wp
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  type: ClusterIP

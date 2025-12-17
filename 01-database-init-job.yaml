@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gfb-db-init
+  namespace: apps
+spec:
+  template:
+    spec:
+      containers:
+      - name: mysql-init
+        image: mysql:8.0
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Creating database and importing dump..."
+          mysql -h mysql.infra -u root -p${MYSQL_ROOT_PASSWORD} <<EOF
+          CREATE DATABASE IF NOT EXISTS gfb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'gfb'@'%' IDENTIFIED BY '${GFB_PASSWORD}';
+          GRANT ALL PRIVILEGES ON gfb.* TO 'gfb'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+          echo "Database created successfully"
+          echo "Importing database dump..."
+          mysql -h mysql.infra -u gfb -p${GFB_PASSWORD} gfb < /dump/gfb_database_dump_2025-10-12.sql
+          echo "Database import completed successfully"
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-root
+              key: password
+        - name: GFB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: gfb-mysql-secret
+              key: MYSQL_PASSWORD
+        volumeMounts:
+        - name: db-dump
+          mountPath: /dump
+          readOnly: true
+      volumes:
+      - name: db-dump
+        hostPath:
+          path: /home/scribe/gfb-dumps
+          type: Directory
+      restartPolicy: OnFailure
+  backoffLimit: 3

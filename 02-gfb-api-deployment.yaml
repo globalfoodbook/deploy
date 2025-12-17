@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gfb-api
+  namespace: gfb
+  labels:
+    app: gfb-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: gfb-api
+  template:
+    metadata:
+      labels:
+        app: gfb-api
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: api
+        image: gfb-api:v1.10.1
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000
+          name: http
+        env:
+        - name: GFB_API_KEYS
+          valueFrom:
+            secretKeyRef:
+              name: gfb-api-secret
+              key: GFB_API_KEYS
+        - name: SQL_MARIADB_DSN
+          valueFrom:
+            secretKeyRef:
+              name: gfb-api-secret
+              key: SQL_MARIADB_DSN
+        - name: PORT
+          value: "5000"
+        - name: REDIS_HOST
+          value: "redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: gfb-redis-secret
+              key: REDIS_PASSWORD
+        - name: RATE_LIMIT_ENABLED
+          value: "true"
+        - name: RATE_LIMIT_FAIL_CLOSED
+          value: "true"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /v1/status
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /v1/status
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
+          httpGet:
+            path: /v1/status
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gfb-api
+  namespace: gfb
+spec:
+  selector:
+    app: gfb-api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5000
+  type: ClusterIP

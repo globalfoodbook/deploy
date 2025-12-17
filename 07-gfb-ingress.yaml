@@ -1,0 +1,205 @@
+---
+# Standard Rate Limiting Middleware (for public endpoints)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rate-limit
+  namespace: gfb
+spec:
+  rateLimit:
+    average: 100
+    burst: 200
+    period: 1m
+    sourceCriterion:
+      ipStrategy:
+        depth: 1
+---
+# Strict Rate Limiting for Admin endpoints
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rate-limit-admin
+  namespace: gfb
+spec:
+  rateLimit:
+    average: 10
+    burst: 20
+    period: 1m
+    sourceCriterion:
+      ipStrategy:
+        depth: 1
+---
+# API Rate Limiting (slightly higher for programmatic access)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rate-limit-api
+  namespace: gfb
+spec:
+  rateLimit:
+    average: 60
+    burst: 100
+    period: 1m
+    sourceCriterion:
+      ipStrategy:
+        depth: 1
+---
+# Request size limit middleware (prevent large payload attacks)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: request-size-limit
+  namespace: gfb
+spec:
+  buffering:
+    maxRequestBodyBytes: 1048576
+---
+# Security headers middleware
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: security-headers
+  namespace: gfb
+spec:
+  headers:
+    frameDeny: true
+    contentTypeNosniff: true
+    browserXssFilter: true
+    referrerPolicy: "strict-origin-when-cross-origin"
+    customResponseHeaders:
+      X-Robots-Tag: "noindex, nofollow, nosnippet, noarchive"
+---
+# Chain middleware for public web traffic
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: web-chain
+  namespace: gfb
+spec:
+  chain:
+    middlewares:
+      - name: rate-limit
+      - name: request-size-limit
+      - name: security-headers
+---
+# Chain middleware for API traffic
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-chain
+  namespace: gfb
+spec:
+  chain:
+    middlewares:
+      - name: rate-limit-api
+      - name: request-size-limit
+---
+# Chain middleware for admin traffic
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: admin-chain
+  namespace: gfb
+spec:
+  chain:
+    middlewares:
+      - name: rate-limit-admin
+      - name: request-size-limit
+      - name: security-headers
+---
+# Circuit breaker for backend protection
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: circuit-breaker
+  namespace: gfb
+spec:
+  circuitBreaker:
+    expression: "ResponseCodeRatio(500, 600, 0, 600) > 0.30 || NetworkErrorRatio() > 0.10"
+---
+# Retry middleware for transient failures
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: retry
+  namespace: gfb
+spec:
+  retry:
+    attempts: 3
+    initialInterval: 100ms
+---
+# Frontend Web Ingress (main domain)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gfb-web
+  namespace: gfb
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: gfb-web-chain@kubernetescrd,gfb-circuit-breaker@kubernetescrd,gfb-retry@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: globalfoodbook.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gfb-web
+            port:
+              number: 80
+  - host: www.globalfoodbook.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gfb-web
+            port:
+              number: 80
+---
+# API Backend Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gfb-api
+  namespace: gfb
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: gfb-api-chain@kubernetescrd,gfb-circuit-breaker@kubernetescrd,gfb-retry@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: api.globalfoodbook.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gfb-api
+            port:
+              number: 80
+---
+# WordPress Admin Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gfb-wp
+  namespace: gfb
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: gfb-admin-chain@kubernetescrd,gfb-circuit-breaker@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: admin.globalfoodbook.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gfb-wp
+            port:
+              number: 80

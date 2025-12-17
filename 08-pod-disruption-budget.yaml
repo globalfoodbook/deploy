@@ -1,0 +1,36 @@
+---
+# Pod Disruption Budgets ensure minimum availability during voluntary disruptions
+# (node drains, cluster upgrades, etc.)
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gfb-api-pdb
+  namespace: gfb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: gfb-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gfb-web-pdb
+  namespace: gfb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: gfb-web
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gfb-wp-pdb
+  namespace: gfb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: gfb-wp
