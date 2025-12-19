@@ -5,6 +5,17 @@ All notable changes to the Global Food Book K3S deployment manifests will be doc
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-12-19
+
+### Overview
+Updates the default `gfb-wp` image tag to `v1.2.2`, which fixes `/wp-admin/` 500s caused by a
+Broken Link Checker PHP 8 fatal and ensures WordPress generates `https://` admin redirects behind
+Cloudflare/Traefik.
+
+### Changed
+- WordPress Deployment (`04-gfb-wp-deployment.yaml`)
+  - Default image tag: `gfb-wp:v1.2.0` → `gfb-wp:v1.2.2`
+
 ## [1.0.3] - 2025-12-19
 
 ### Overview
