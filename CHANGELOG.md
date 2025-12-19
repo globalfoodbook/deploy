@@ -5,6 +5,16 @@ All notable changes to the Global Food Book K3S deployment manifests will be doc
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-12-19
+
+### Overview
+Updates the default `gfb-api` image tag to `v1.10.3`, which prevents a known crash loop (nil-pointer
+panic in `models.Author.Scan`) under database connection pressure.
+
+### Changed
+- API Deployment (`02-gfb-api-deployment.yaml`)
+  - Default image tag: `gfb-api:v1.10.2` → `gfb-api:v1.10.3`
+
 ## [1.0.1] - 2025-12-19
 
 ### Overview

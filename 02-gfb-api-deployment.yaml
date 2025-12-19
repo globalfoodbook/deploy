@@ -23,7 +23,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: api
-        image: gfb-api:v1.10.2
+        image: gfb-api:v1.10.3
         imagePullPolicy: Never
         ports:
         - containerPort: 5000
