@@ -5,6 +5,22 @@ All notable changes to the Global Food Book K3S deployment manifests will be doc
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2025-12-19
+
+### Overview
+Adds Traefik Basic Auth protection for WordPress admin/login routes on `admin.globalfoodbook.com`
+using a dedicated middleware and a path-scoped Ingress.
+
+### Added
+- Admin Basic Auth middleware (`admin-basic-auth`) referencing Secret `gfb-admin-basic-auth`.
+- Protected admin chain (`admin-protected-chain`) that adds Basic Auth on top of existing admin
+  rate limiting, request-size limits, and security headers.
+- Additional Ingress (`gfb-wp-protected`) to scope Basic Auth to `/wp-login.php` and `/wp-admin`.
+
+### Notes
+- Create Secret `gfb-admin-basic-auth` with an htpasswd-formatted `users` key before applying.
+- If the WordPress `http-auth` plugin is enabled, disable it to avoid double-auth/lockouts.
+
 ## [1.0.5] - 2025-12-19
 
 ### Overview

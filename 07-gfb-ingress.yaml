@@ -107,6 +107,31 @@ spec:
       - name: request-size-limit
       - name: security-headers
 ---
+# Basic Auth middleware for protected admin paths (login + wp-admin)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: admin-basic-auth
+  namespace: gfb
+spec:
+  basicAuth:
+    realm: "Restricted Site"
+    secret: gfb-admin-basic-auth
+---
+# Chain middleware for protected admin paths (adds Basic Auth)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: admin-protected-chain
+  namespace: gfb
+spec:
+  chain:
+    middlewares:
+      - name: rate-limit-admin
+      - name: admin-basic-auth
+      - name: request-size-limit
+      - name: security-headers
+---
 # Circuit breaker for backend protection
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -197,6 +222,35 @@ spec:
     http:
       paths:
       - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gfb-wp
+            port:
+              number: 80
+---
+# WordPress Admin Ingress (protected: wp-login + wp-admin)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gfb-wp-protected
+  namespace: gfb
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: gfb-admin-protected-chain@kubernetescrd,gfb-circuit-breaker@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: admin.globalfoodbook.com
+    http:
+      paths:
+      - path: /wp-admin
+        pathType: Prefix
+        backend:
+          service:
+            name: gfb-wp
+            port:
+              number: 80
+      - path: /wp-login.php
         pathType: Prefix
         backend:
           service:
