@@ -23,7 +23,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: wordpress
-        image: gfb-wp:v1.2.2
+        image: gfb-wp:v1.2.3
         imagePullPolicy: Never
         ports:
         - containerPort: 80

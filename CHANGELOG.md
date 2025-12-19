@@ -5,6 +5,17 @@ All notable changes to the Global Food Book K3S deployment manifests will be doc
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2025-12-19
+
+### Overview
+Updates the default `gfb-wp` image tag to `v1.2.3`, which restores working HTTP Basic Auth for
+`admin.globalfoodbook.com` by making the `http-auth` plugin compatible with environments where
+`PHP_AUTH_USER`/`PHP_AUTH_PW` are not populated.
+
+### Changed
+- WordPress Deployment (`04-gfb-wp-deployment.yaml`)
+  - Default image tag: `gfb-wp:v1.2.2` → `gfb-wp:v1.2.3`
+
 ## [1.0.4] - 2025-12-19
 
 ### Overview
