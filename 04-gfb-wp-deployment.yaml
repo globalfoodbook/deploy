@@ -23,7 +23,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: wordpress
-        image: gfb-wp:v1.1.4
+        image: gfb-wp:v1.2.0
         imagePullPolicy: Never
         ports:
         - containerPort: 80
@@ -103,6 +103,10 @@ spec:
         envFrom:
         - secretRef:
             name: gfb-wp-secret
+        # HTTP Basic Auth credentials (http-auth plugin reads these env vars).
+        - secretRef:
+            name: gfb-wp-http-auth
+            optional: true
         volumeMounts:
         - name: wordpress-content
           mountPath: /var/www/html/wp-content/uploads

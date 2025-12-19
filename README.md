@@ -24,6 +24,7 @@ This repo focuses on deploying:
 - `04-gfb-wp-deployment.yaml` — WordPress Deployment + Service
 - `05-gfb-web-deployment.yaml` — Web Deployment + Service
 - `06-gfb-wp-auth-secrets.yaml` — WordPress auth keys secret template
+- `09-gfb-wp-http-auth-secret.yaml` — Optional HTTP Basic Auth secret template (admin site)
 - `07-gfb-ingress.yaml` — Ingress rules (Traefik/K3S)
 - `08-pod-disruption-budget.yaml` — PDBs for higher availability
 - `scripts/` — helper scripts for deploying and managing secrets
@@ -35,8 +36,11 @@ At minimum, deployments expect:
 - `gfb-api-secret` (e.g. `GFB_API_KEYS`, `SQL_MARIADB_DSN`)
 - `gfb-web-secret` (e.g. `GFB_API_BACKEND_URL`, `GFB_API_KEYS`, `GFB_CDN_URL`, `PUBLIC_GFB_DOMAINS`, etc.)
 - `gfb-wp-secret` (e.g. DB settings and WP Stateless settings)
+- `gfb-wp-http-auth` (`HTTP_AUTH_USERNAME`, `HTTP_AUTH_PASSWORD` for `admin.globalfoodbook.com` Basic Auth)
 - `gfb-redis-secret` (`REDIS_PASSWORD`, if Redis auth is enabled)
 - `gfb-wp-auth-keys` (WordPress auth keys/salts)
+
+If `gfb-wp-http-auth` is present, the `http-auth` plugin will prefer these env vars over values stored in the WordPress database.
 
 ## Deploy
 

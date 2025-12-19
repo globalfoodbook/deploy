@@ -5,6 +5,35 @@ All notable changes to the Global Food Book K3S deployment manifests will be doc
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-12-19
+
+### Overview
+Aligns runtime health checks and admin authentication plumbing with the latest service hardening:
+API probes now verify dependencies via `/v1/health`, and WordPress can read Basic Auth credentials
+from a Kubernetes Secret.
+
+### Changed
+- API Deployment (`02-gfb-api-deployment.yaml`)
+  - Liveness/readiness probes: `/v1/status` → `/v1/health` (dependency-aware check)
+  - Default image tag: `gfb-api:v1.10.2`
+- Web Deployment (`05-gfb-web-deployment.yaml`)
+  - Default image tag: `gfb-web:v1.7.2`
+- WordPress Deployment (`04-gfb-wp-deployment.yaml`)
+  - Default image tag: `gfb-wp:v1.2.0`
+  - Adds `envFrom` Secret `gfb-wp-http-auth` for the `http-auth` plugin
+  - Fixes YAML indentation so manifests apply cleanly
+
+### Documentation
+- `README.md` documents the new `gfb-wp-http-auth` Secret and behavior.
+
+### Security
+- Credentials for admin Basic Auth can be rotated via Kubernetes Secret without modifying the
+  WordPress DB options table.
+
+### Deployment Notes
+- Apply manifests: `kubectl apply -f . -n gfb`
+- Verify rollouts: `kubectl -n gfb rollout status deploy/gfb-api deploy/gfb-web deploy/gfb-wp`
+
 ## [1.0.0] - 2025-12-17
 
 ### Added
