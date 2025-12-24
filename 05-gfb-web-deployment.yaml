@@ -23,7 +23,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: frontend
-        image: gfb-web:v1.7.2
+        image: gfb-web:v1.7.3
         imagePullPolicy: Never
         ports:
         - containerPort: 9000
